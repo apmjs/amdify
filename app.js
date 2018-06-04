@@ -85,6 +85,11 @@ app.get('*.js', function (req, res, next) {
   })
 })
 
+app.use(function (err, req, res, next) {
+  console.error(err)
+  res.status(500).end(err.message)
+})
+
 app.listen(port, function (err) {
   if (err) {
     throw err

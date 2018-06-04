@@ -1,6 +1,6 @@
 # amdify
 
-Super-easy AMD optimize-as-a-service service.
+Super-easy AMD optimize-as-a-service service. [Try it now!](https://amdfiy.herokuapp.com/@searchfe/promise.js)
 
 ## Installation
 

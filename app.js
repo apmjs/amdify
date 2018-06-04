@@ -1,6 +1,7 @@
 const express = require('express')
 const morgan = require('morgan')
-const validate = require("validate-npm-package-name")
+const validate = require('validate-npm-package-name')
+const chalk = require('chalk')
 const debug = require('debug')('amdfly')
 
 const rjs = require('./rjs')
@@ -9,6 +10,8 @@ const currentPkg = require('./package.json')
 
 const app = express()
 const port = process.env.PORT || 8132
+
+const AMDIFY_PREFIX = chalk.cyan('amdify')
 
 app.use(morgan('dev'))
 app.use(express.static('dist'))
@@ -42,7 +45,7 @@ app.get('*.js', function (req, res, next) {
 
     if (!apm.hasInstalled(pkg)) {
       debug(`${pkg} is not installed`)
-      console.log(`[amdfiy] Installing ${pkg} ...`)
+      console.log(`${AMDIFY_PREFIX} Installing ${pkg} ...`)
       promise = apm.install(pkg)
     } else {
       debug(`${pkg} is installed`)
@@ -51,12 +54,12 @@ app.get('*.js', function (req, res, next) {
 
     promise = promise
       .then(() => {
-        console.log(`[amdfiy] Optimizing ${pkg} ...`)
+        console.log(`${AMDIFY_PREFIX} Optimizing ${pkg} ...`)
         return rjs.optimize(pkg)
       })
       .then((log) => {
         debug(`optimized ${pkg}`, log)
-        console.log(`[amdfiy] Optimized ${pkg}`)
+        console.log(`${AMDIFY_PREFIX} Optimized ${pkg}`)
       })
 
     installPromises.set(pkg, promise)
@@ -86,5 +89,5 @@ app.listen(port, function (err) {
   if (err) {
     throw err
   }
-  console.log(`amdfiy listened on port ${port}`)
+  console.log(`${AMDIFY_PREFIX} listened on port ${port}`)
 })

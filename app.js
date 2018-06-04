@@ -2,7 +2,7 @@ const express = require('express')
 const morgan = require('morgan')
 const validate = require('validate-npm-package-name')
 const chalk = require('chalk')
-const debug = require('debug')('amdfly')
+const debug = require('debug')('amdfiy')
 
 const rjs = require('./rjs')
 const apm = require('./apm')

@@ -1,6 +1,6 @@
 const fs = require('fs')
 const path = require('path')
-const debug = require('debug')('amdfly')
+const debug = require('debug')('amdfiy')
 const childProcess = require('child_process')
 
 const amdDir = path.join(__dirname, 'amd_modules')

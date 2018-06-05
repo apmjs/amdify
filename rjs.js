@@ -6,7 +6,8 @@ function optimize(package) {
       baseUrl: 'amd_modules',
       name: package,
       optimize: 'none',
-      out: `dist/${package}.js`
+      out: `dist/${package}.js`,
+      generateSourceMaps: true
     }, resolve, reject)
   })
 }

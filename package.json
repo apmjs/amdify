@@ -3,17 +3,21 @@
   "version": "0.1.1",
   "main": "app.js",
   "scripts": {
-    "start": "node app.js"
+    "start": "node app.js",
+    "clean": "rm -rf cache && rm -rf dist && rm -rf amd_modules"
   },
   "license": "MIT",
   "devDependencies": {},
   "dependencies": {
+    "@oott123/r.js": "^1.0.1",
     "apmjs": "^3.1.5",
+    "axios": "^0.18.0",
     "chalk": "^2.4.1",
     "debug": "^3.1.0",
     "express": "^4.16.3",
+    "mkdirp": "^0.5.1",
     "morgan": "^1.9.0",
-    "requirejs": "^2.3.5",
+    "semver": "^5.5.0",
     "validate-npm-package-name": "^3.0.0"
   },
   "amdDependencies": {}

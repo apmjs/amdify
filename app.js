@@ -3,9 +3,11 @@ const morgan = require('morgan')
 const validate = require('validate-npm-package-name')
 const chalk = require('chalk')
 const debug = require('debug')('amdfiy')
+const axios = require('axios')
 
 const rjs = require('./rjs')
 const apm = require('./apm')
+const registry = require('./registry')
 const currentPkg = require('./package.json')
 
 const app = express()
@@ -23,67 +25,76 @@ app.get('/', function (req, res) {
   })
 })
 
-const installPromises = new Map()
 
 app.get('*.js', function (req, res, next) {
   if (!req.path.endsWith('.js')) {
     return res.end('please append .js to your url.')
   }
   const pkg = req.path.replace(/^\/+/, '').replace(/\.js$/, '')
-  if (!validate(pkg).validForOldPackages) {
+  let [pkgName, verQuery] = pkg.split('@')
+  if (!validate(pkgName).validForOldPackages) {
     return res.status(400).end('Package name invalid.')
   }
-  debug(`fallback to script process, ${pkg}`)
+  registry.findPackageVersion(pkgName, verQuery)
+  .then(ver => {
+    if (ver !== verQuery) {
+      return res.redirect(302, `/${pkgName}@${ver}.js`)
+    }
+    return servePkg(pkgName, ver)
+      .then(file => {
+        res.sendFile(file, { root: __dirname })
+      })
+  })
+  .catch(err => {
+    next(err)
+  })
+})
+
+const installPromises = new Map()
+
+function servePkg(pkgName, pkgVer) {
+  pkgId = `${pkgName}@${pkgVer}`
+  debug(`fallback to script process, ${pkgId}`)
 
   let promise
 
-  if (installPromises.has(pkg)) {
-    debug(`${pkg} promise is in the cache`)
-    promise = installPromises.get(pkg)
+  if (installPromises.has(pkgId)) {
+    debug(`${pkgId} promise is in the cache`)
+    promise = installPromises.get(pkgId)
   } else {
-    debug(`${pkg} is not in the cache`)
+    debug(`${pkgId} is not in the cache`)
 
-    if (!apm.hasInstalled(pkg)) {
-      debug(`${pkg} is not installed`)
-      console.log(`${AMDIFY_PREFIX} Installing ${pkg} ...`)
-      promise = apm.install(pkg)
+    if (!apm.hasInstalled(pkgName, pkgVer)) {
+      debug(`${pkgId} is not installed`)
+      console.log(`${AMDIFY_PREFIX} Installing ${pkgId} ...`)
+      promise = apm.install(pkgName, pkgVer)
     } else {
-      debug(`${pkg} is installed`)
+      debug(`${pkgId} is installed`)
       promise = Promise.resolve()
     }
 
     promise = promise
       .then(() => {
-        console.log(`${AMDIFY_PREFIX} Optimizing ${pkg} ...`)
-        return rjs.optimize(pkg)
+        console.log(`${AMDIFY_PREFIX} Optimizing ${pkgId} ...`)
+        return rjs.optimize(pkgName, pkgVer)
       })
       .then((log) => {
-        debug(`optimized ${pkg}`, log)
-        console.log(`${AMDIFY_PREFIX} Optimized ${pkg}`)
+        debug(`optimized ${pkgId}`, log)
+        console.log(`${AMDIFY_PREFIX} Optimized ${pkgId}`)
       })
 
-    installPromises.set(pkg, promise)
+    installPromises.set(pkgId, promise)
   }
 
-  promise.then(() => new Promise((resolve, reject) => {
-    res.sendFile(`dist/${pkg}.js`, {
-      root: __dirname
-    }, (err) => {
-      if (err) {
-        reject(err)
-      } else {
-        resolve()
-      }
-    })
-  }))
-  .catch(err => {
-    debug(`${pkg} error`, err)
-    next(err)
-  })
+  return promise
   .then(() => {
-    installPromises.delete(pkg)
+    installPromises.delete(pkgId)
+    return `dist/${pkgId}.js`
+  }, err => {
+    debug(`${pkgId} error`, err)
+    throw err
   })
-})
+}
 
 app.use(function (err, req, res, next) {
   console.error(err)

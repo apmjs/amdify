@@ -31,7 +31,7 @@ app.get('*.js', function (req, res, next) {
     return res.end('please append .js to your url.')
   }
   const pkg = req.path.replace(/^\/+/, '').replace(/\.js$/, '')
-  let [pkgName, verQuery] = pkg.split('@')
+  let [exp, pkgName, verQuery] = pkg.match(/(^.[^@]+)@?(.*)$/)
   if (!validate(pkgName).validForOldPackages) {
     return res.status(400).end('Package name invalid.')
   }
